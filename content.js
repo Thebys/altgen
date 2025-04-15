@@ -1,6 +1,7 @@
 // Listen for messages from the background script
 browser.runtime.onMessage.addListener(message => {
   if (message.action === "extractContext") {
+    console.log("Content script received message:", message);
     extractImageContext(message.targetSrc);
   }
 });
@@ -11,37 +12,41 @@ browser.runtime.onMessage.addListener(message => {
  */
 async function extractImageContext(targetSrc) {
   try {
+    console.log("Attempting to find image with src:", targetSrc);
+    
     // Find the image element
     const imgElement = findImageBySrc(targetSrc);
+    
     if (!imgElement) {
-      throw new Error("Could not find the image element");
+      console.error("Image element not found. Attempting fuzzy search...");
+      
+      // Try fuzzy matching as a fallback
+      const imgElementFuzzy = findImageBySrcFuzzy(targetSrc);
+      
+      if (imgElementFuzzy) {
+        console.log("Found image with fuzzy matching:", imgElementFuzzy);
+        processImageElement(imgElementFuzzy, targetSrc);
+      } else {
+        // If all else fails, show all images on page for debugging
+        const allImages = document.querySelectorAll('img');
+        console.log("All images on page:", allImages.length);
+        allImages.forEach((img, index) => {
+          console.log(`Image ${index}:`, {
+            src: img.src,
+            srcset: img.srcset,
+            currentSrc: img.currentSrc,
+            alt: img.alt,
+            width: img.width,
+            height: img.height
+          });
+        });
+        
+        throw new Error("Could not find the image element");
+      }
+    } else {
+      console.log("Found image directly:", imgElement);
+      processImageElement(imgElement, targetSrc);
     }
-    
-    // Get image data
-    const imageData = await getImageAsBase64(targetSrc);
-    
-    // Get original alt text
-    const originalAlt = imgElement.alt || "";
-    
-    // Get WordPress post ID if available
-    const wpPostId = extractWordPressPostId();
-    
-    // Extract surrounding context
-    const htmlContext = extractSurroundingContext(imgElement);
-    
-    // Send data to background script
-    browser.runtime.sendMessage({
-      action: "processImage",
-      imageData: imageData,
-      imageUrl: targetSrc,
-      originalAlt: originalAlt,
-      htmlContext: htmlContext,
-      wpPostId: wpPostId
-    });
-    
-    // Open the popup
-    browser.runtime.sendMessage({ action: "openPopup" });
-    
   } catch (error) {
     console.error("Error extracting context:", error);
     browser.runtime.sendMessage({
@@ -52,17 +57,92 @@ async function extractImageContext(targetSrc) {
 }
 
 /**
+ * Process the found image element
+ */
+async function processImageElement(imgElement, originalSrc) {
+  try {
+    // Get image data
+    const imageData = await getImageAsBase64(originalSrc);
+    
+    // Get original alt text
+    const originalAlt = imgElement.alt || "";
+    
+    // Get WordPress post ID if available
+    const wpPostId = extractWordPressPostId();
+    
+    // Extract surrounding context
+    const htmlContext = extractSurroundingContext(imgElement);
+    
+    console.log("Extracted context:", {
+      originalAlt,
+      wpPostId,
+      contextLength: htmlContext.length
+    });
+    
+    // Send data to background script
+    browser.runtime.sendMessage({
+      action: "processImage",
+      imageData: imageData,
+      imageUrl: originalSrc,
+      originalAlt: originalAlt,
+      htmlContext: htmlContext,
+      wpPostId: wpPostId
+    });
+    
+    // Open the popup
+    browser.runtime.sendMessage({ action: "openPopup" });
+  } catch (error) {
+    console.error("Error processing image:", error);
+    throw error;
+  }
+}
+
+/**
  * Find image element by its src attribute
  * @param {string} src - Image source URL
  * @returns {HTMLImageElement|null} The image element or null if not found
  */
 function findImageBySrc(src) {
   const images = document.querySelectorAll('img');
+  console.log(`Searching among ${images.length} images on the page`);
+  
   for (const img of images) {
     if (img.src === src) {
       return img;
     }
   }
+  return null;
+}
+
+/**
+ * Find image using fuzzy matching for src
+ * This helps with protocol differences, URL encoding, etc.
+ */
+function findImageBySrcFuzzy(src) {
+  const images = document.querySelectorAll('img');
+  
+  // Try to extract filename from src
+  const srcFilename = src.split('/').pop().split('?')[0];
+  console.log("Looking for image with filename:", srcFilename);
+  
+  // Check against src, currentSrc, and srcset
+  for (const img of images) {
+    // Check standard src
+    if (img.src.includes(srcFilename)) {
+      return img;
+    }
+    
+    // Check current src (might be different due to responsive images)
+    if (img.currentSrc && img.currentSrc.includes(srcFilename)) {
+      return img;
+    }
+    
+    // Check srcset if available
+    if (img.srcset && img.srcset.includes(srcFilename)) {
+      return img;
+    }
+  }
+  
   return null;
 }
 

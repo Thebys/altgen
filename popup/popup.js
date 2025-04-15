@@ -4,6 +4,8 @@ let currentWpPostId = null;
 
 // Initialize popup when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+  console.log("Popup loaded");
+  
   // Get UI elements
   const loadingSection = document.getElementById('loading');
   const errorSection = document.getElementById('error');
@@ -23,10 +25,22 @@ document.addEventListener('DOMContentLoaded', () => {
   closeErrorBtn.addEventListener('click', () => {
     errorSection.classList.add('hidden');
     loadingSection.classList.remove('hidden');
+    
+    // Try to trigger the process again if there was an error
+    browser.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      // Check if we have active tabs
+      if (tabs && tabs.length > 0) {
+        console.log("Retrying after error, active tab:", tabs[0].url);
+      } else {
+        console.warn("No active tabs found for retry");
+      }
+    });
   });
   
   // Listen for messages from background script
   browser.runtime.onMessage.addListener(message => {
+    console.log("Popup received message:", message.action);
+    
     if (message.action === 'displayAltText') {
       // Store image data
       currentImageUrl = message.imageUrl;
@@ -55,6 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
       errorSection.classList.remove('hidden');
     }
   });
+  
+  // Check if we need to show an error message from any previous failures
+  browser.runtime.sendMessage({ action: "checkStatus" });
 });
 
 /**

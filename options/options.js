@@ -7,13 +7,15 @@ function saveOptions(e) {
   const wpSiteUrl = document.getElementById('wp-site-url').value;
   const wpUsername = document.getElementById('wp-username').value;
   const wpAppPassword = document.getElementById('wp-app-password').value;
+  const language = document.getElementById('language').value;
   
   // Save to storage
   browser.storage.sync.set({
     openaiApiKey: openaiApiKey,
     wpSiteUrl: wpSiteUrl,
     wpUsername: wpUsername,
-    wpApplicationPassword: wpAppPassword
+    wpApplicationPassword: wpAppPassword,
+    language: language
   }).then(() => {
     // Update status to let user know options were saved
     const status = document.getElementById('status-message');
@@ -32,12 +34,14 @@ function restoreOptions() {
     openaiApiKey: '',
     wpSiteUrl: '',
     wpUsername: '',
-    wpApplicationPassword: ''
+    wpApplicationPassword: '',
+    language: 'en'
   }).then((items) => {
     document.getElementById('openai-api-key').value = items.openaiApiKey;
     document.getElementById('wp-site-url').value = items.wpSiteUrl;
     document.getElementById('wp-username').value = items.wpUsername;
     document.getElementById('wp-app-password').value = items.wpApplicationPassword;
+    document.getElementById('language').value = items.language;
   });
 }
 
