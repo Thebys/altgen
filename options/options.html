@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <h1>AltGen Options</h1>
+    
+    <div class="section">
+      <h2>OpenAI API</h2>
+      <div class="form-group">
+        <label for="openai-api-key">API Key</label>
+        <input type="password" id="openai-api-key" placeholder="sk-...">
+        <p class="help">Your OpenAI API key. Required for generating alt text.</p>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>WordPress Integration (Optional)</h2>
+      <div class="form-group">
+        <label for="wp-site-url">WordPress Site URL</label>
+        <input type="url" id="wp-site-url" placeholder="https://your-site.com">
+        <p class="help">The URL of your WordPress site</p>
+      </div>
+      
+      <div class="form-group">
+        <label for="wp-username">WordPress Username</label>
+        <input type="text" id="wp-username">
+        <p class="help">Your WordPress username</p>
+      </div>
+      
+      <div class="form-group">
+        <label for="wp-app-password">Application Password</label>
+        <input type="password" id="wp-app-password">
+        <p class="help">
+          WordPress application password (not your regular password). 
+          <a href="https://make.wordpress.org/core/2020/11/05/application-passwords-integration-guide/" target="_blank">Learn how to create one</a>
+        </p>
+      </div>
+    </div>
+    
+    <div class="actions">
+      <button id="save-btn">Save Options</button>
+      <span id="status-message"></span>
+    </div>
+  </div>
+  
+  <script src="options.js"></script>
+</body>
+</html> 

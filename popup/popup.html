@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>AltGen</h1>
+    
+    <div id="loading" class="section">
+      <p>Generating alt text...</p>
+      <div class="spinner"></div>
+    </div>
+    
+    <div id="error" class="section hidden">
+      <h2>Error</h2>
+      <p id="error-message"></p>
+      <button id="close-error">Close</button>
+    </div>
+    
+    <div id="result" class="section hidden">
+      <div class="image-preview">
+        <img id="preview-image" src="" alt="">
+        <p>Original Alt: <span id="original-alt"></span></p>
+      </div>
+      
+      <div class="alt-text-result">
+        <h2>Generated Alt Text</h2>
+        <textarea id="alt-text" rows="4"></textarea>
+        
+        <div class="actions">
+          <button id="copy-btn">Copy to Clipboard</button>
+          <button id="update-wp-btn" class="hidden">Update in WordPress</button>
+        </div>
+        
+        <div class="status">
+          <p id="status-message"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html> 

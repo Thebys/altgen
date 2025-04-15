@@ -1,0 +1,39 @@
+{
+  "manifest_version": 2,
+  "name": "AltGen",
+  "version": "0.1.0",
+  "description": "AI-powered alt text generator for WordPress images",
+  "icons": {
+    "48": "icons/altgen-48.png",
+    "96": "icons/altgen-96.png"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "contextMenus",
+    "downloads",
+    "*://*/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "browser_action": {
+    "default_icon": {
+      "19": "icons/altgen-19.png",
+      "38": "icons/altgen-38.png"
+    },
+    "default_title": "AltGen",
+    "default_popup": "popup/popup.html"
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  }
+} 
