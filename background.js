@@ -335,7 +335,10 @@ async function updateWordPressAltText(mediaId, altText, wpSiteUrl, wpUsername, w
         'Content-Type': 'application/json',
         'Authorization': authHeader
       },
-      credentials: 'omit', // Prevent cookies from being sent with the request
+      // If you are logged in Wordpress administrator, somehow your cookies might get confused with the application password process used by this extension.
+      // The following line is to prevent sending such user credentials, so that Wordpress interprets it as authenticated via application password.
+      // See: https://github.com/WP-API/Basic-Auth/issues/35#issuecomment-1628176509
+      credentials: 'omit', 
       body: JSON.stringify({
         alt_text: altText
       })
@@ -416,6 +419,9 @@ async function getMediaIdFromUrl(wpSiteUrl, imageUrl) {
           console.log("Partial search URL:", searchPartialUrl);
           
           const response = await fetch(searchPartialUrl, {
+            // If you are logged in Wordpress administrator, somehow your cookies might get confused with the application password process used by this extension.
+            // The following line is to prevent sending such user credentials, so that Wordpress interprets it as authenticated via application password.
+            // See: https://github.com/WP-API/Basic-Auth/issues/35#issuecomment-1628176509
             credentials: 'omit'
           });
           const data = await response.json();

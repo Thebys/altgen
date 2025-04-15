@@ -155,6 +155,7 @@ async function updateWordPressAltText() {
           if (message.success) {
             statusMessage.textContent = 'Alt text updated in WordPress!';
             statusMessage.style.color = '#27ae60';
+            statusMessage.style.fontWeight = 'bold';
           } else {
             statusMessage.textContent = `Error: ${message.error}`;
             statusMessage.style.color = '#e74c3c';
@@ -163,7 +164,8 @@ async function updateWordPressAltText() {
           // Clear status message after 3 seconds
           setTimeout(() => {
             statusMessage.textContent = '';
-          }, 3000);
+            statusMessage.style.fontWeight = 'normal';
+          }, 5000);
         }
       };
       
