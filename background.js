@@ -109,7 +109,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           imageUrl: message.imageUrl,
           originalAlt: message.originalAlt,
           altText: altText,
-          wpPostId: message.wpPostId
+          wpPostId: message.wpPostId,
+          isWordPressSite: message.isWordPressSite
         };
         
         // Update badge to indicate success
@@ -124,7 +125,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             altText: altText,
             imageUrl: message.imageUrl,
             originalAlt: message.originalAlt,
-            wpPostId: message.wpPostId
+            wpPostId: message.wpPostId,
+            isWordPressSite: message.isWordPressSite
           }).catch(err => {
             // Ignore the error - popup not open
             console.log("Popup not open yet, data will be sent when opened");
@@ -162,7 +164,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         altText: processingImageData.altText,
         imageUrl: processingImageData.imageUrl,
         originalAlt: processingImageData.originalAlt,
-        wpPostId: processingImageData.wpPostId
+        wpPostId: processingImageData.wpPostId,
+        isWordPressSite: processingImageData.isWordPressSite
       });
     } 
     // If there was a previous error, send it to the popup
@@ -365,12 +368,21 @@ async function getMediaIdFromUrl(wpSiteUrl, imageUrl) {
   try {
     console.log("Fetching media ID for image URL:", imageUrl);
     
-    // Extract filename from URL
+    // Extract filename from URL and decode it
     const urlParts = imageUrl.split('/');
-    const filename = urlParts[urlParts.length - 1];
+    const filenameWithQuery = urlParts[urlParts.length - 1];
+    // Remove query parameters if any
+    const filename = filenameWithQuery.split('?')[0];
     
-    // Search for media by filename
-    const response = await fetch(`${wpSiteUrl}/wp-json/wp/v2/media?search=${filename}`, {
+    // Decode URL encoded characters
+    const decodedFilename = decodeURIComponent(filename);
+    console.log("Searching for media with filename:", decodedFilename);
+    
+    // Search for media by filename (exact match with per_page=1)
+    const searchUrl = `${wpSiteUrl}/wp-json/wp/v2/media?search=${encodeURIComponent(decodedFilename)}&per_page=1`;
+    console.log("Search URL:", searchUrl);
+    
+    const response = await fetch(searchUrl, {
       credentials: 'omit' // Prevent cookies from being sent with the request
     });
     const data = await response.json();
@@ -380,7 +392,7 @@ async function getMediaIdFromUrl(wpSiteUrl, imageUrl) {
       return data[0].id;
     }
     
-    console.warn("No media found for filename:", filename);
+    console.warn("No media found for filename:", decodedFilename);
     return null;
   } catch (error) {
     console.error('Error getting media ID:', error);

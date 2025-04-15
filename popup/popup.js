@@ -43,9 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
       originalAlt.textContent = message.originalAlt || '(none)';
       altTextArea.value = message.altText;
       
-      // Show WordPress update button if we have post ID
-      if (currentWpPostId) {
+      // Show WordPress update button only on WordPress sites
+      // We can determine this by checking if we're on a WordPress site (not checking for post ID)
+      if (message.isWordPressSite === true) {
         updateWpBtn.classList.remove('hidden');
+      } else {
+        updateWpBtn.classList.add('hidden');
       }
       
       // Show result section

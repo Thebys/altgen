@@ -70,12 +70,16 @@ async function processImageElement(imgElement, originalSrc) {
     // Get WordPress post ID if available
     const wpPostId = extractWordPressPostId();
     
+    // Check if we're on a WordPress site
+    const isWPSite = isWordPressSite();
+    
     // Extract surrounding context
     const htmlContext = extractSurroundingContext(imgElement);
     
     console.log("Extracted context:", {
       originalAlt,
       wpPostId,
+      isWordPressSite: isWPSite,
       contextLength: htmlContext.length
     });
     
@@ -86,7 +90,8 @@ async function processImageElement(imgElement, originalSrc) {
       imageUrl: originalSrc,
       originalAlt: originalAlt,
       htmlContext: htmlContext,
-      wpPostId: wpPostId
+      wpPostId: wpPostId,
+      isWordPressSite: isWPSite
     });
   } catch (error) {
     console.error("Error processing image:", error);
@@ -317,4 +322,41 @@ async function getImageAsBase64(src) {
     
     img.src = src;
   });
+}
+
+/**
+ * Check if the current site is a WordPress site
+ * @returns {boolean} True if the site is WordPress
+ */
+function isWordPressSite() {
+  // Check for WordPress meta generator tag
+  const metaGenerator = document.querySelector('meta[name="generator"]');
+  if (metaGenerator && metaGenerator.content && metaGenerator.content.includes('WordPress')) {
+    return true;
+  }
+  
+  // Check for WordPress REST API link
+  if (document.querySelector('link[rel="https://api.w.org/"]')) {
+    return true;
+  }
+  
+  // Check for wp- classes in body
+  const bodyClasses = document.body.className;
+  if (bodyClasses.includes('wp-') || bodyClasses.includes('wordpress')) {
+    return true;
+  }
+  
+  // Check for common WordPress script includes
+  const scripts = document.querySelectorAll('script');
+  for (const script of scripts) {
+    if (script.src && (
+      script.src.includes('/wp-includes/') || 
+      script.src.includes('/wp-content/') ||
+      script.src.includes('wp-embed.min.js')
+    )) {
+      return true;
+    }
+  }
+  
+  return false;
 } 
