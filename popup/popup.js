@@ -125,8 +125,8 @@ async function updateWordPressAltText() {
     return;
   }
   
-  if (!currentWpPostId) {
-    statusMessage.textContent = 'WordPress post ID not available';
+  if (!currentImageUrl) {
+    statusMessage.textContent = 'Image URL not available';
     statusMessage.style.color = '#e74c3c';
     return;
   }
@@ -143,68 +143,43 @@ async function updateWordPressAltText() {
       statusMessage.textContent = 'Updating WordPress...';
       statusMessage.style.color = '#3498db';
       
-      // Get media attachment ID from image URL
-      const mediaId = await getMediaIdFromUrl(items.wpSiteUrl, currentImageUrl);
+      // Add a message listener for the response
+      const messageListener = (message) => {
+        if (message.action === 'wordpressUpdateResult') {
+          // Remove this listener once we get our response
+          browser.runtime.onMessage.removeListener(messageListener);
+          
+          if (message.success) {
+            statusMessage.textContent = 'Alt text updated in WordPress!';
+            statusMessage.style.color = '#27ae60';
+          } else {
+            statusMessage.textContent = `Error: ${message.error}`;
+            statusMessage.style.color = '#e74c3c';
+          }
+          
+          // Clear status message after 3 seconds
+          setTimeout(() => {
+            statusMessage.textContent = '';
+          }, 3000);
+        }
+      };
       
-      if (!mediaId) {
-        throw new Error('Could not find media ID for this image');
-      }
+      // Register the listener
+      browser.runtime.onMessage.addListener(messageListener);
       
-      // Update media alt text
-      const authHeader = 'Basic ' + btoa(`${items.wpUsername}:${items.wpApplicationPassword}`);
-      const response = await fetch(`${items.wpSiteUrl}/wp-json/wp/v2/media/${mediaId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': authHeader
-        },
-        body: JSON.stringify({
-          alt_text: altText
-        })
+      // Send the update request to the background script
+      browser.runtime.sendMessage({
+        action: 'updateWordPressAltText',
+        imageUrl: currentImageUrl,
+        altText: altText,
+        wpSiteUrl: items.wpSiteUrl,
+        wpUsername: items.wpUsername,
+        wpApplicationPassword: items.wpApplicationPassword
       });
-      
-      if (!response.ok) {
-        throw new Error(`WordPress API error: ${response.status}`);
-      }
-      
-      statusMessage.textContent = 'Alt text updated in WordPress!';
-      statusMessage.style.color = '#27ae60';
-      
-      // Clear status message after 3 seconds
-      setTimeout(() => {
-        statusMessage.textContent = '';
-      }, 3000);
       
     } catch (error) {
       statusMessage.textContent = `Error: ${error.message}`;
       statusMessage.style.color = '#e74c3c';
     }
   });
-}
-
-/**
- * Get WordPress media ID from image URL
- * @param {string} wpSiteUrl - WordPress site URL
- * @param {string} imageUrl - Image URL
- * @returns {Promise<string|null>} Media ID or null
- */
-async function getMediaIdFromUrl(wpSiteUrl, imageUrl) {
-  try {
-    // Extract filename from URL
-    const urlParts = imageUrl.split('/');
-    const filename = urlParts[urlParts.length - 1];
-    
-    // Search for media by filename
-    const response = await fetch(`${wpSiteUrl}/wp-json/wp/v2/media?search=${filename}`);
-    const data = await response.json();
-    
-    if (data && data.length > 0) {
-      return data[0].id;
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error getting media ID:', error);
-    return null;
-  }
 } 

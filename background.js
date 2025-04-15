@@ -180,6 +180,46 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         imageUrl: processingImageData.imageUrl
       });
     }
+  } else if (message.action === "updateWordPressAltText") {
+    // Handle the WordPress alt text update request from popup
+    console.log("Received request to update WordPress alt text", message);
+    
+    // Get media ID from URL
+    getMediaIdFromUrl(message.wpSiteUrl, message.imageUrl)
+      .then(mediaId => {
+        if (!mediaId) {
+          throw new Error("Could not find media ID for this image");
+        }
+        
+        // Call the update function
+        return updateWordPressAltText(
+          mediaId, 
+          message.altText, 
+          message.wpSiteUrl, 
+          message.wpUsername, 
+          message.wpApplicationPassword
+        );
+      })
+      .then(() => {
+        // Send success response back to popup
+        browser.runtime.sendMessage({
+          action: "wordpressUpdateResult",
+          success: true
+        });
+      })
+      .catch(error => {
+        console.error("Error updating WordPress alt text:", error);
+        
+        // Send error response back to popup
+        browser.runtime.sendMessage({
+          action: "wordpressUpdateResult",
+          success: false,
+          error: error.message
+        });
+      });
+    
+    // Return true to indicate we'll handle this asynchronously
+    return true;
   }
 });
 
@@ -274,7 +314,7 @@ async function generateAltText(imageData, htmlContext, imageUrl, originalAlt) {
 }
 
 // Function to update WordPress image alt text via REST API
-async function updateWordPressAltText(mediaId, altText, wpSiteUrl, wpUsername, wpAppPassword) {
+async function updateWordPressAltText(mediaId, altText, wpSiteUrl, wpUsername, wpApplicationPassword) {
   try {
     console.log("Attempting to update WordPress alt text for media ID:", mediaId);
     console.log("Alt text to update:", altText);
@@ -282,7 +322,7 @@ async function updateWordPressAltText(mediaId, altText, wpSiteUrl, wpUsername, w
     console.log("WordPress username:", wpUsername);
     
     // Prepare authentication header
-    const authHeader = 'Basic ' + btoa(`${wpUsername}:${wpAppPassword}`);
+    const authHeader = 'Basic ' + btoa(`${wpUsername}:${wpApplicationPassword}`);
     console.log("Authorization header:", authHeader);
     
     // Update media alt text
@@ -292,6 +332,7 @@ async function updateWordPressAltText(mediaId, altText, wpSiteUrl, wpUsername, w
         'Content-Type': 'application/json',
         'Authorization': authHeader
       },
+      credentials: 'omit', // Prevent cookies from being sent with the request
       body: JSON.stringify({
         alt_text: altText
       })
@@ -329,7 +370,9 @@ async function getMediaIdFromUrl(wpSiteUrl, imageUrl) {
     const filename = urlParts[urlParts.length - 1];
     
     // Search for media by filename
-    const response = await fetch(`${wpSiteUrl}/wp-json/wp/v2/media?search=${filename}`);
+    const response = await fetch(`${wpSiteUrl}/wp-json/wp/v2/media?search=${filename}`, {
+      credentials: 'omit' // Prevent cookies from being sent with the request
+    });
     const data = await response.json();
     
     if (data && data.length > 0) {
