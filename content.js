@@ -88,9 +88,6 @@ async function processImageElement(imgElement, originalSrc) {
       htmlContext: htmlContext,
       wpPostId: wpPostId
     });
-    
-    // Open the popup
-    browser.runtime.sendMessage({ action: "openPopup" });
   } catch (error) {
     console.error("Error processing image:", error);
     throw error;

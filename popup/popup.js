@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Get UI elements
   const loadingSection = document.getElementById('loading');
+  const loadingMessage = document.getElementById('loading-message');
   const errorSection = document.getElementById('error');
   const resultSection = document.getElementById('result');
   const errorMessage = document.getElementById('error-message');
@@ -25,16 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   closeErrorBtn.addEventListener('click', () => {
     errorSection.classList.add('hidden');
     loadingSection.classList.remove('hidden');
-    
-    // Try to trigger the process again if there was an error
-    browser.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      // Check if we have active tabs
-      if (tabs && tabs.length > 0) {
-        console.log("Retrying after error, active tab:", tabs[0].url);
-      } else {
-        console.warn("No active tabs found for retry");
-      }
-    });
+    loadingMessage.textContent = 'Waiting for image selection...';
   });
   
   // Listen for messages from background script
@@ -68,10 +60,31 @@ document.addEventListener('DOMContentLoaded', () => {
       resultSection.classList.add('hidden');
       errorSection.classList.remove('hidden');
     }
+    else if (message.action === 'displayProcessing') {
+      // Update loading message based on state
+      if (message.state === 'extracting_context') {
+        loadingMessage.textContent = 'Extracting image context...';
+      } else if (message.state === 'generating_alt_text') {
+        loadingMessage.textContent = 'Generating alt text with AI...';
+        
+        // Set preview image if available
+        if (message.imageUrl) {
+          previewImage.src = message.imageUrl;
+        }
+      }
+      
+      // Show loading section
+      errorSection.classList.add('hidden');
+      resultSection.classList.add('hidden');
+      loadingSection.classList.remove('hidden');
+    }
   });
   
-  // Check if we need to show an error message from any previous failures
+  // Check status when popup opens
   browser.runtime.sendMessage({ action: "checkStatus" });
+  
+  // Show default loading state if nothing else happens
+  loadingMessage.textContent = 'Waiting for image selection...';
 });
 
 /**
