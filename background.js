@@ -378,8 +378,81 @@ async function getMediaIdFromUrl(wpSiteUrl, imageUrl) {
     const decodedFilename = decodeURIComponent(filename);
     console.log("Searching for media with filename:", decodedFilename);
     
+    // First try with the exact filename
+    let mediaId = await searchMediaByFilename(wpSiteUrl, decodedFilename);
+    
+    // If not found and filename appears to have a resolution suffix, try removing it
+    if (!mediaId) {
+      // Handle different WordPress resolution patterns:
+      // - filename-400x400.jpg (standard resized version)
+      // - filename-400x400-c-default.jpg (cropped versions)
+      // Also handle filenames that might already have hyphens
+
+      // Extract the base name and extension
+      const filenameParts = decodedFilename.match(/^(.+)\.([^.]+)$/);
+      
+      if (filenameParts) {
+        const [, basePart, extension] = filenameParts;
+        
+        // Remove resolution suffix if it exists
+        let baseFilename;
+        
+        // Try to find and remove resolution pattern at the end (like -400x400)
+        const resolutionMatch = basePart.match(/^(.+)-\d+x\d+(?:-.+)?$/);
+        if (resolutionMatch) {
+          baseFilename = `${resolutionMatch[1]}.${extension}`;
+          console.log("No match found. Trying with base filename:", baseFilename);
+          mediaId = await searchMediaByFilename(wpSiteUrl, baseFilename);
+        }
+        
+        // If still not found, try a broader approach: search by just the first part of the filename
+        // This helps with WordPress's unpredictable naming patterns
+        if (!mediaId && basePart.includes('-')) {
+          const firstPart = basePart.split('-')[0];
+          console.log("Still no match. Trying partial search with:", firstPart);
+          
+          // Search by the first part of the filename using the WordPress REST API search parameter
+          const searchPartialUrl = `${wpSiteUrl}/wp-json/wp/v2/media?search=${encodeURIComponent(firstPart)}&per_page=5`;
+          console.log("Partial search URL:", searchPartialUrl);
+          
+          const response = await fetch(searchPartialUrl, {
+            credentials: 'omit'
+          });
+          const data = await response.json();
+          
+          if (data && data.length > 0) {
+            // If we found multiple results, try to find the one most similar to our original filename
+            for (const item of data) {
+              const sourceUrl = item.source_url || '';
+              const sourceParts = sourceUrl.split('/');
+              const sourceFilename = sourceParts[sourceParts.length - 1];
+              
+              console.log("Comparing with potential match:", sourceFilename);
+              
+              // If this item's filename contains our first part, use it
+              if (sourceFilename.includes(firstPart)) {
+                console.log("Found potential match by partial filename:", item.id);
+                mediaId = item.id;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return mediaId;
+  } catch (error) {
+    console.error('Error getting media ID:', error);
+    return null;
+  }
+}
+
+// Helper function to search for media by filename
+async function searchMediaByFilename(wpSiteUrl, filename) {
+  try {
     // Search for media by filename (exact match with per_page=1)
-    const searchUrl = `${wpSiteUrl}/wp-json/wp/v2/media?search=${encodeURIComponent(decodedFilename)}&per_page=1`;
+    const searchUrl = `${wpSiteUrl}/wp-json/wp/v2/media?search=${encodeURIComponent(filename)}&per_page=1`;
     console.log("Search URL:", searchUrl);
     
     const response = await fetch(searchUrl, {
@@ -392,10 +465,10 @@ async function getMediaIdFromUrl(wpSiteUrl, imageUrl) {
       return data[0].id;
     }
     
-    console.warn("No media found for filename:", decodedFilename);
+    console.warn("No media found for filename:", filename);
     return null;
   } catch (error) {
-    console.error('Error getting media ID:', error);
+    console.error('Error searching media by filename:', error);
     return null;
   }
 } 
