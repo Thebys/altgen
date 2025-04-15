@@ -9,8 +9,10 @@
     }
   },
   "icons": {
-    "48": "icons/altgen-48.png",
-    "96": "icons/altgen-96.png"
+    "16": "icons/altgen-16.png",
+    "32": "icons/altgen-32.png",
+    "64": "icons/altgen-64.png",
+    "128": "icons/altgen-128.png"
   },
   "permissions": [
     "activeTab",
@@ -34,10 +36,10 @@
   ],
   "browser_action": {
     "default_icon": {
-      "19": "icons/altgen-19.png",
-      "38": "icons/altgen-38.png",
-      "48": "icons/altgen-48.png",
-      "96": "icons/altgen-96.png"
+      "16": "icons/altgen-16.png",
+      "32": "icons/altgen-32.png",
+      "64": "icons/altgen-64.png",
+      "128": "icons/altgen-128.png"
     },
     "default_title": "AltGen",
     "default_popup": "popup/popup.html"
