@@ -282,11 +282,11 @@ async function generateAltText(imageData, htmlContext, imageUrl, originalAlt) {
     switch (language) {
       case 'cs':
         prompt = `Vytvoř prosím alt text pro tento obrázek. Popis by měl být vizuálně popisující obrázek. Prioritou je přístupnost, 
-        sekunrádní zájem je SEO pro Impact Hub. Níže je také kontext - původní ALT text a URL/název souboru by měly mít pro zjištění
+        sekunrádní zájem je SEO. Níže je také kontext - původní ALT text a URL/název souboru by měly mít pro zjištění
         kontextu větší váhu, naproti tomu HTML kontext s obrázkem vůbec nemusí souviset a měl by mít menší váhu. 
         Vyhni se spekulacím (pravděpodobně, asi, zřejmě, ...).
         
-        Spíš konkrétní názvy souborů: 1-99, DSC*, IMG*, Impact, Hub, Praha, Brno, Ostrava, Mashup, ...
+        Spíš konkrétní názvy souborů: 1-99, DSC*, IMG*, ...
         Spíš obecné / generické / ilustrativní názvy souborů: photo, image, stock, eng, english, ...
 
         URL a Název souboru: ${imageUrl}

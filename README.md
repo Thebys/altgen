@@ -50,39 +50,42 @@ AltGen is a Firefox browser extension that helps improve accessibility and SEO o
 - **OpenAI API**: For generating alt text (GPT-4 or newer with vision capabilities)
 - **WordPress REST API**: For updating image metadata (optional)
 
-## MVP Implementation Plan
+## Features
 
-### Phase 1: Core Functionality
-- Set up extension structure with manifest
-- Implement context menu on images
-- Create content script to extract image and HTML context
-- Build basic popup UI to display results
+### Core Functionality
+- Firefox extension.
+- Context menu on images.
+- Content script to extract image and HTML context.
+- Basic popup UI to display controls and results.
 
-### Phase 2: AI Integration
-- Add OpenAI API integration
-- Implement prompt engineering for optimal alt text generation
-- Add user controls for AI model/settings
 
-### Phase 3: WordPress Integration
-- Add WordPress REST API authentication
-- Implement direct updating of alt text in WordPress
-- Add batch processing capabilities
+### AI Integration
+- Using OpenAI API, BYOK, gpt40 (vision).
+- Implement prompt engineering for optimal alt text generation.
 
-## Development Setup
-1. Clone repository
-2. Install dependencies with `npm install`
-3. Load unpacked extension in Firefox Developer Edition
-4. Configure API keys in options page
+
+### WordPress Integration
+- Add WordPress REST API authentication using application password
+- Implement direct updating of alt text in WordPress (Media Library)
+- Can trigger site-wide update if you have [Altsync wordpress plugin](https://github.com/thebys/altsync) enabled.
+
+## Setup
+1. Clone repository.
+2. Load unpacked extension in Firefox Developer Edition and enable Altgen. 
+3. Right click extension icon -> Manage extension -> three dots -> options
+4. Configure openAI API key with access to gpt4o model. 
+5. Optional. Recomended. Set up Wordpress username (users username, not application password name) and application password.
+Doing this will enable updating the alt text in Media library.
+6. Optional. Recomended. Get Altsync plugin to sync empty & stale or all alt text from Media Library to posts. See https://github.com/thebys/altsync.
 
 ## Limitations & Considerations
-- Requires OpenAI API key (user-provided)
-- Context extraction may vary based on WordPress theme structure
-- WordPress API integration requires site credentials
+- Requires OpenAI API key (user-provided).
+- Context extraction may vary based on WordPress theme structure.
+- WordPress API integration requires site credentials (app password).
+- Does not work with basic auth enabled.
 
 ## Future Enhancements
-- Support for additional browsers (Chrome, Edge)
-- Batch processing of multiple images
-- AI model selection options
-- Local model support for privacy
-- Auto-detection of images without alt text
-- Usage statistics and reporting 
+- Support for additional browsers (Chrome, Edge).
+- Batch processing of multiple images.
+- AI model selection options.
+- Local model support for privacy.
