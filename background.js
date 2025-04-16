@@ -25,6 +25,9 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
       imageUrl: info.srcUrl
     };
     
+    // Reset preloadedMediaId for each new image processing
+    preloadedMediaId = null;
+    
     // Instead of opening popup, set badge to indicate processing
     browser.browserAction.setBadgeText({ text: "⏳" });
     browser.browserAction.setBadgeBackgroundColor({ color: "#3498db" });
@@ -111,6 +114,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             .then(mediaId => {
               console.log("Preloaded media ID:", mediaId);
               preloadedMediaId = mediaId;
+              
+              // Update processingImageData with the preloaded media ID
+              if (processingImageData && processingImageData.state === "completed") {
+                processingImageData.mediaId = mediaId;
+              }
             })
             .catch(error => {
               console.error("Error preloading media ID:", error);
@@ -124,7 +132,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .then(altText => {
         console.log("Generated alt text:", altText);
         
-        // Store result for popup
+        // Store result for popup, use the current preloadedMediaId (which may be null if not loaded yet)
         processingImageData = {
           state: "completed",
           imageUrl: message.imageUrl,
@@ -189,7 +197,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         originalAlt: processingImageData.originalAlt,
         wpPostId: processingImageData.wpPostId,
         isWordPressSite: processingImageData.isWordPressSite,
-        mediaId: processingImageData.mediaId // Include the preloaded media ID
+        mediaId: processingImageData.mediaId // Use the media ID from processingImageData
       });
     } 
     // If there was a previous error, send it to the popup
@@ -211,9 +219,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Handle the WordPress alt text update request from popup
     console.log("Received request to update WordPress alt text", message);
     
+    // Use the media ID from the message directly, don't mix with preloadedMediaId
+    const mediaIdToUse = message.mediaId;
+    
     // If we already have the media ID, use it; otherwise, get it
-    const getMediaId = message.mediaId 
-      ? Promise.resolve(message.mediaId)
+    const getMediaId = mediaIdToUse 
+      ? Promise.resolve(mediaIdToUse)
       : getMediaIdFromUrl(message.wpSiteUrl, message.imageUrl);
     
     getMediaId
@@ -252,9 +263,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Handle the AltSync request from popup
     console.log("Received request to sync alt text", message);
     
+    // Use the media ID from the message directly, don't mix with preloadedMediaId
+    const mediaIdToUse = message.mediaId;
+    
     // If we already have the media ID, use it; otherwise, get it
-    const getMediaId = message.mediaId 
-      ? Promise.resolve(message.mediaId)
+    const getMediaId = mediaIdToUse 
+      ? Promise.resolve(mediaIdToUse)
       : getMediaIdFromUrl(message.wpSiteUrl, message.imageUrl);
     
     getMediaId
