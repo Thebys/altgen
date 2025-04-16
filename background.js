@@ -440,7 +440,6 @@ async function updateWordPressAltText(mediaId, altText, wpSiteUrl, wpUsername, w
     
     // Prepare authentication header
     const authHeader = 'Basic ' + btoa(`${wpUsername}:${wpApplicationPassword}`);
-    console.log("Authorization header:", authHeader);
     
     // Update media alt text
     const response = await fetch(`${wpSiteUrl}/wp-json/wp/v2/media/${mediaId}`, {
@@ -458,10 +457,6 @@ async function updateWordPressAltText(mediaId, altText, wpSiteUrl, wpUsername, w
       })
     });
     
-    console.log("Request headers:", {
-      'Content-Type': 'application/json',
-      'Authorization': authHeader
-    });
     console.log("Request payload:", JSON.stringify({
       alt_text: altText
     }));
@@ -504,10 +499,6 @@ async function syncAltText(mediaId, syncMode, wpSiteUrl, wpUsername, wpApplicati
       })
     });
     
-    console.log("Request headers:", {
-      'Content-Type': 'application/json',
-      'Authorization': authHeader
-    });
     console.log("Request payload:", JSON.stringify({
       attachment_id: mediaId,
       sync_mode: syncMode

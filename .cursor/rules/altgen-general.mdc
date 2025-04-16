@@ -1,0 +1,60 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# AltGen Project Rules
+
+## Project Overview
+
+**Description:** This is a Firefox browser extension called AltGen that generates alt text for images on WordPress sites using AI. It uses JavaScript, HTML, CSS, WebExtensions APIs, OpenAI API, and WordPress REST API.
+
+**Tags:** `project-info`, `javascript`, `firefox-extension`, `webextensions`, `openai`, `wordpress`
+
+---
+
+## Coding Style
+
+**Description:** Follow modern JavaScript (ES6+) best practices. Use clear variable and function names. Adhere to standard WebExtensions API usage.
+
+**Tags:** `javascript`, `style-guide`
+
+---
+
+## API Usage
+
+**Description:** Handle OpenAI and WordPress API interactions carefully. Ensure API keys and user credentials (application passwords) are stored and used securely (e.g., using `browser.storage.local`). Implement proper error handling for API calls.
+
+**Tags:** `api`, `openai`, `wordpress`, `security`, `error-handling`
+
+---
+
+## File Structure
+
+**Description:** Maintain a standard browser extension structure: `manifest.json` at the root, background scripts, content scripts, popup/options pages in separate files/folders.
+
+**Tags:** `project-structure`, `firefox-extension`
+
+---
+
+## Documentation
+
+**Description:** Use JSDoc comments for functions and complex code blocks. Keep the `README.md` updated with major changes.
+
+**Tags:** `documentation`, `jsdoc`, `readme`
+
+---
+
+## Dependencies
+
+**Description:** Minimize external dependencies. Use native WebExtensions APIs where possible.
+
+**Tags:** `dependencies`, `webextensions`
+
+---
+
+## Security
+
+**Description:** Prioritize security, especially when handling API keys and user credentials. Avoid storing sensitive information directly in the code.
+
+**Tags:** `security`, `api-keys`

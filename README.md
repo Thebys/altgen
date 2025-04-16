@@ -1,6 +1,6 @@
 # AltGen: AI-Powered Alt Text Generator for WordPress
 
-![Version](https://img.shields.io/badge/version-0.9.2-blue)
+![Version](https://img.shields.io/badge/version-0.9.6-blue)
 ![Firefox](https://img.shields.io/badge/Firefox-Compatible-orange)
 ![WordPress](https://img.shields.io/badge/WordPress-Compatible-green)
 
@@ -105,3 +105,11 @@ Currently, the extension is optimized for OpenAI's GPT-4o, but we're exploring s
 - Batch processing of multiple images
 - AI model selection options
 - Local model support for privacy
+
+## Credits
+<p align="center">
+<a href="https://impacthub.cz/" target="_blank">
+  <img width="200" src="./misc/logo-impact-hub.jpg"><br>
+Development sponsored by Impact Hub Czech Republic.
+</a>
+</p>
