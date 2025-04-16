@@ -1,6 +1,8 @@
 // Global variables
 let currentImageUrl = '';
 let currentWpPostId = null;
+let currentMediaId = null;
+let altTextSaved = false;
 
 // Initialize popup when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,16 +19,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const altTextArea = document.getElementById('alt-text');
   const copyBtn = document.getElementById('copy-btn');
   const updateWpBtn = document.getElementById('update-wp-btn');
+  const syncOptionsDiv = document.getElementById('sync-options');
+  const syncModeSelect = document.getElementById('sync-mode');
+  const syncBtn = document.getElementById('sync-btn');
   const statusMessage = document.getElementById('status-message');
   const closeErrorBtn = document.getElementById('close-error');
   
   // Add event listeners
   copyBtn.addEventListener('click', copyAltTextToClipboard);
   updateWpBtn.addEventListener('click', updateWordPressAltText);
+  syncBtn.addEventListener('click', syncAltTextAcrossSite);
   closeErrorBtn.addEventListener('click', () => {
     errorSection.classList.add('hidden');
     loadingSection.classList.remove('hidden');
     loadingMessage.textContent = 'Waiting for image selection...';
+  });
+  
+  // Load default sync mode from options
+  browser.storage.sync.get(['defaultSyncMode'], (items) => {
+    if (items.defaultSyncMode) {
+      syncModeSelect.value = items.defaultSyncMode;
+    }
   });
   
   // Listen for messages from background script
@@ -37,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Store image data
       currentImageUrl = message.imageUrl;
       currentWpPostId = message.wpPostId;
+      altTextSaved = false;
       
       // Update UI
       previewImage.src = message.imageUrl;
@@ -44,11 +58,11 @@ document.addEventListener('DOMContentLoaded', () => {
       altTextArea.value = message.altText;
       
       // Show WordPress update button only on WordPress sites
-      // We can determine this by checking if we're on a WordPress site (not checking for post ID)
       if (message.isWordPressSite === true) {
         updateWpBtn.classList.remove('hidden');
       } else {
         updateWpBtn.classList.add('hidden');
+        syncOptionsDiv.classList.add('hidden');
       }
       
       // Show result section
@@ -80,6 +94,50 @@ document.addEventListener('DOMContentLoaded', () => {
       errorSection.classList.add('hidden');
       resultSection.classList.add('hidden');
       loadingSection.classList.remove('hidden');
+    }
+    else if (message.action === 'wordpressUpdateResult') {
+      if (message.success) {
+        statusMessage.textContent = 'Alt text updated in WordPress!';
+        statusMessage.style.color = '#27ae60';
+        altTextSaved = true;
+        
+        // Now show the sync options
+        syncOptionsDiv.classList.remove('hidden');
+      } else {
+        statusMessage.textContent = `Error: ${message.error}`;
+        statusMessage.style.color = '#e74c3c';
+        altTextSaved = false;
+      }
+      
+      // Style the message
+      statusMessage.style.fontWeight = 'bold';
+      
+      // Clear status message after time
+      setTimeout(() => {
+        statusMessage.style.fontWeight = 'normal';
+        
+        // Only clear the status message if there's no sync result displayed
+        if (!statusMessage.textContent.includes('synced')) {
+          statusMessage.textContent = '';
+        }
+      }, 5000);
+    }
+    else if (message.action === 'altSyncResult') {
+      if (message.success) {
+        statusMessage.textContent = message.message || `Alt text synced to ${message.updatedCount} posts!`;
+        statusMessage.style.color = '#27ae60';
+      } else {
+        statusMessage.textContent = `Sync error: ${message.error}`;
+        statusMessage.style.color = '#e74c3c';
+      }
+      
+      // Style the message
+      statusMessage.style.fontWeight = 'bold';
+      
+      // Clear status message after time
+      setTimeout(() => {
+        statusMessage.style.fontWeight = 'normal';
+      }, 8000);
     }
   });
   
@@ -155,7 +213,6 @@ async function updateWordPressAltText() {
           if (message.success) {
             statusMessage.textContent = 'Alt text updated in WordPress!';
             statusMessage.style.color = '#27ae60';
-            statusMessage.style.fontWeight = 'bold';
           } else {
             statusMessage.textContent = `Error: ${message.error}`;
             statusMessage.style.color = '#e74c3c';
@@ -164,7 +221,6 @@ async function updateWordPressAltText() {
           // Clear status message after 3 seconds
           setTimeout(() => {
             statusMessage.textContent = '';
-            statusMessage.style.fontWeight = 'normal';
           }, 5000);
         }
       };
@@ -177,6 +233,55 @@ async function updateWordPressAltText() {
         action: 'updateWordPressAltText',
         imageUrl: currentImageUrl,
         altText: altText,
+        wpSiteUrl: items.wpSiteUrl,
+        wpUsername: items.wpUsername,
+        wpApplicationPassword: items.wpApplicationPassword
+      });
+      
+    } catch (error) {
+      statusMessage.textContent = `Error: ${error.message}`;
+      statusMessage.style.color = '#e74c3c';
+    }
+  });
+}
+
+/**
+ * Sync alt text across the WordPress site using AltSync API
+ */
+function syncAltTextAcrossSite() {
+  const statusMessage = document.getElementById('status-message');
+  const syncModeSelect = document.getElementById('sync-mode');
+  const syncMode = syncModeSelect.value;
+  
+  if (!altTextSaved) {
+    statusMessage.textContent = 'Please save alt text to WordPress first';
+    statusMessage.style.color = '#e74c3c';
+    return;
+  }
+  
+  if (!currentImageUrl) {
+    statusMessage.textContent = 'Image URL not available';
+    statusMessage.style.color = '#e74c3c';
+    return;
+  }
+  
+  // Get WordPress credentials from storage
+  browser.storage.sync.get(['wpSiteUrl', 'wpUsername', 'wpApplicationPassword'], async (items) => {
+    if (!items.wpSiteUrl || !items.wpUsername || !items.wpApplicationPassword) {
+      statusMessage.textContent = 'WordPress credentials not configured in options';
+      statusMessage.style.color = '#e74c3c';
+      return;
+    }
+    
+    try {
+      statusMessage.textContent = 'Syncing alt text across site...';
+      statusMessage.style.color = '#3498db';
+      
+      // Send the sync request to the background script
+      browser.runtime.sendMessage({
+        action: 'syncAltText',
+        imageUrl: currentImageUrl,
+        syncMode: syncMode,
         wpSiteUrl: items.wpSiteUrl,
         wpUsername: items.wpUsername,
         wpApplicationPassword: items.wpApplicationPassword

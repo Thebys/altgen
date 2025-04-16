@@ -204,25 +204,61 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         );
       })
       .then(() => {
-        // Send success response back to popup
+        // Send success message back to popup
         browser.runtime.sendMessage({
           action: "wordpressUpdateResult",
           success: true
         });
       })
       .catch(error => {
-        console.error("Error updating WordPress alt text:", error);
+        console.error("Error in WordPress update flow:", error);
         
-        // Send error response back to popup
+        // Send error message back to popup
         browser.runtime.sendMessage({
           action: "wordpressUpdateResult",
           success: false,
           error: error.message
         });
       });
+  } else if (message.action === "syncAltText") {
+    // Handle the AltSync request from popup
+    console.log("Received request to sync alt text", message);
     
-    // Return true to indicate we'll handle this asynchronously
-    return true;
+    // Get media ID from URL
+    getMediaIdFromUrl(message.wpSiteUrl, message.imageUrl)
+      .then(mediaId => {
+        if (!mediaId) {
+          throw new Error("Could not find media ID for this image");
+        }
+        
+        // Call the sync function
+        return syncAltText(
+          mediaId,
+          message.syncMode,
+          message.wpSiteUrl,
+          message.wpUsername,
+          message.wpApplicationPassword
+        );
+      })
+      .then((syncResult) => {
+        // Send success message back to popup
+        browser.runtime.sendMessage({
+          action: "altSyncResult",
+          success: true,
+          message: syncResult.message,
+          updatedCount: syncResult.updated_count
+        });
+      })
+      .catch(error => {
+        console.error("Error in AltSync flow:", error);
+        
+        // Send error message back to popup
+        browser.runtime.sendMessage({
+          action: "altSyncResult",
+          success: false,
+          error: error.message
+        });
+      });
   }
 });
 
@@ -362,6 +398,54 @@ async function updateWordPressAltText(mediaId, altText, wpSiteUrl, wpUsername, w
     return true;
   } catch (error) {
     console.error("Error updating WordPress alt text:", error);
+    throw error;
+  }
+}
+
+// Function to sync alt text across the WordPress site
+async function syncAltText(mediaId, syncMode, wpSiteUrl, wpUsername, wpApplicationPassword) {
+  try {
+    console.log("Attempting to sync alt text across site for media ID:", mediaId);
+    console.log("Sync mode:", syncMode);
+    console.log("WordPress site URL:", wpSiteUrl);
+    
+    // Prepare authentication header
+    const authHeader = 'Basic ' + btoa(`${wpUsername}:${wpApplicationPassword}`);
+    
+    // Call the AltSync API
+    const response = await fetch(`${wpSiteUrl}/wp-json/altsync/v1/sync-image`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader
+      },
+      credentials: 'omit', // Prevent sending cookies to avoid authentication conflicts
+      body: JSON.stringify({
+        attachment_id: mediaId,
+        sync_mode: syncMode
+      })
+    });
+    
+    console.log("Request headers:", {
+      'Content-Type': 'application/json',
+      'Authorization': authHeader
+    });
+    console.log("Request payload:", JSON.stringify({
+      attachment_id: mediaId,
+      sync_mode: syncMode
+    }));
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("AltSync API error:", errorData);
+      throw new Error(`AltSync API error: ${response.status} - ${errorData.message}`);
+    }
+    
+    const responseData = await response.json();
+    console.log("Successfully synced alt text across site:", responseData);
+    return responseData;
+  } catch (error) {
+    console.error("Error syncing alt text:", error);
     throw error;
   }
 }
