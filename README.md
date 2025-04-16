@@ -13,7 +13,7 @@ AltGen is a Firefox browser extension that helps improve accessibility and SEO o
 - AI-powered alt text generation via OpenAI API
 - Human-in-the-loop review and editing of suggested alt text
 - Optional direct updating via WordPress REST API
-- Integration with [AltSync WordPress plugin](https://github.com/thebys/altsync) for site-wide alt text synchronization
+- Integration with [**AltSync WordPress plugin**](https://github.com/thebys/altsync) for site-wide alt text sync/update
 
 ## 🔄 User Flow
 1. User navigates to a WordPress page/post with images
@@ -88,6 +88,7 @@ AltGen is a Firefox browser extension that helps improve accessibility and SEO o
 - Context extraction may vary based on WordPress theme structure
 - WordPress API integration requires site credentials (app password)
 - Does not work with basic auth enabled
+- Mostly vibecoded and kinda slow
 
 ## ❓ FAQ
 ### Does this work with non-WordPress sites?
