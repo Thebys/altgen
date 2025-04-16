@@ -259,6 +259,30 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           error: error.message
         });
       });
+  } else if (message.action === "checkAltSyncPlugin") {
+    // Handle the check for AltSync plugin availability
+    console.log("Checking if AltSync plugin is available on:", message.wpSiteUrl);
+    
+    checkAltSyncStatus(message.wpSiteUrl)
+      .then(statusResult => {
+        // Send status result back to popup
+        browser.runtime.sendMessage({
+          action: "altSyncPluginStatus",
+          available: statusResult.success === true,
+          version: statusResult.version || null,
+          message: statusResult.message || null
+        });
+      })
+      .catch(error => {
+        console.error("Error checking AltSync plugin status:", error);
+        
+        // Send error message back to popup
+        browser.runtime.sendMessage({
+          action: "altSyncPluginStatus",
+          available: false,
+          error: error.message
+        });
+      });
   }
 });
 
@@ -447,6 +471,35 @@ async function syncAltText(mediaId, syncMode, wpSiteUrl, wpUsername, wpApplicati
   } catch (error) {
     console.error("Error syncing alt text:", error);
     throw error;
+  }
+}
+
+// Function to check if AltSync plugin is active
+async function checkAltSyncStatus(wpSiteUrl) {
+  try {
+    console.log("Checking AltSync plugin status for site:", wpSiteUrl);
+    
+    // Call the AltSync status API
+    const response = await fetch(`${wpSiteUrl}/wp-json/altsync/v1/status`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'omit' // Prevent sending cookies to avoid authentication conflicts
+    });
+    
+    if (!response.ok) {
+      console.log("AltSync plugin is not available (status endpoint returned error)");
+      return { success: false };
+    }
+    
+    const responseData = await response.json();
+    console.log("AltSync plugin status:", responseData);
+    
+    return responseData;
+  } catch (error) {
+    console.error("Error checking AltSync status:", error);
+    return { success: false };
   }
 }
 

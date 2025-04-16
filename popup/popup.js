@@ -101,8 +101,19 @@ document.addEventListener('DOMContentLoaded', () => {
         statusMessage.style.color = '#27ae60';
         altTextSaved = true;
         
-        // Now show the sync options
-        syncOptionsDiv.classList.remove('hidden');
+        // Check if AltSync plugin is available
+        browser.storage.sync.get(['wpSiteUrl'], (items) => {
+          if (items.wpSiteUrl) {
+            // Send message to check AltSync plugin status
+            browser.runtime.sendMessage({
+              action: "checkAltSyncPlugin",
+              wpSiteUrl: items.wpSiteUrl
+            });
+          } else {
+            // Just show sync options without checking plugin
+            syncOptionsDiv.classList.remove('hidden');
+          }
+        });
         
         // Add a warning about sync below the status message
         setTimeout(() => {
@@ -158,6 +169,47 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         statusMessage.style.fontWeight = 'normal';
       }, 8000);
+    }
+    else if (message.action === 'altSyncPluginStatus') {
+      if (message.available) {
+        // Show sync options if plugin is available
+        syncOptionsDiv.classList.remove('hidden');
+        
+        // Update the sync button text with version if available
+        if (message.version) {
+          const syncBtnText = document.getElementById('sync-btn-text');
+          if (syncBtnText) {
+            syncBtnText.textContent = `Sync with AltSync v${message.version}`;
+          }
+        }
+      } else {
+        // Create a message about AltSync plugin not being available with a link
+        const altSyncNotAvailable = document.createElement('div');
+        altSyncNotAvailable.className = 'altsync-info';
+        altSyncNotAvailable.innerHTML = `
+          <p>AltSync plugin not detected on your site.</p>
+          <p><a href="https://github.com/thebys/altsync" target="_blank">Install the AltSync plugin</a> to enable synchronizing alt text across your WordPress site.</p>
+        `;
+        altSyncNotAvailable.style.marginTop = '10px';
+        altSyncNotAvailable.style.backgroundColor = '#f8f8f8';
+        altSyncNotAvailable.style.padding = '8px';
+        altSyncNotAvailable.style.borderRadius = '4px';
+        altSyncNotAvailable.style.fontSize = '0.9em';
+        
+        // Remove existing message if any
+        const existingMessage = document.querySelector('.altsync-info');
+        if (existingMessage) {
+          existingMessage.remove();
+        }
+        
+        // Add message before or in place of sync options
+        if (syncOptionsDiv.parentNode) {
+          syncOptionsDiv.parentNode.insertBefore(altSyncNotAvailable, syncOptionsDiv);
+        }
+        
+        // Hide the sync options
+        syncOptionsDiv.classList.add('hidden');
+      }
     }
   });
   
