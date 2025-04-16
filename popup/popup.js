@@ -97,12 +97,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     else if (message.action === 'wordpressUpdateResult') {
       if (message.success) {
-        statusMessage.textContent = 'Alt text updated in WordPress!';
+        statusMessage.textContent = 'Alt text successfully updated in Media Library!';
         statusMessage.style.color = '#27ae60';
         altTextSaved = true;
         
         // Now show the sync options
         syncOptionsDiv.classList.remove('hidden');
+        
+        // Add a warning about sync below the status message
+        setTimeout(() => {
+          const warningHtml = document.createElement('p');
+          warningHtml.textContent = 'Warning: Syncing will update this image across all pages. Choose "Empty" for safer updates.';
+          warningHtml.style.color = '#e67e22';
+          warningHtml.style.fontSize = '0.85em';
+          warningHtml.style.fontWeight = 'bold';
+          warningHtml.style.marginTop = '5px';
+          warningHtml.id = 'sync-warning';
+          
+          // Remove existing warning if any
+          const existingWarning = document.getElementById('sync-warning');
+          if (existingWarning) {
+            existingWarning.remove();
+          }
+          
+          // Insert warning before sync options
+          syncOptionsDiv.parentNode.insertBefore(warningHtml, syncOptionsDiv);
+        }, 100);
       } else {
         statusMessage.textContent = `Error: ${message.error}`;
         statusMessage.style.color = '#e74c3c';
@@ -124,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     else if (message.action === 'altSyncResult') {
       if (message.success) {
-        statusMessage.textContent = message.message || `Alt text synced to ${message.updatedCount} posts!`;
+        statusMessage.textContent = message.message || `Alt text successfully synced to ${message.updatedCount} page instances!`;
         statusMessage.style.color = '#27ae60';
       } else {
         statusMessage.textContent = `Sync error: ${message.error}`;
@@ -211,7 +231,7 @@ async function updateWordPressAltText() {
           browser.runtime.onMessage.removeListener(messageListener);
           
           if (message.success) {
-            statusMessage.textContent = 'Alt text updated in WordPress!';
+            statusMessage.textContent = 'Alt text successfully updated in Media Library!';
             statusMessage.style.color = '#27ae60';
           } else {
             statusMessage.textContent = `Error: ${message.error}`;
