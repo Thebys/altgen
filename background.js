@@ -9,6 +9,7 @@ browser.contextMenus.create({
 // Storage for last error message
 let lastErrorMessage = null;
 let processingImageData = null;
+let preloadedMediaId = null; // Add a variable to store preloaded media ID
 
 // Handle context menu clicks
 browser.contextMenus.onClicked.addListener((info, tab) => {
@@ -99,6 +100,26 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     browser.browserAction.setBadgeText({ text: "⏳" });
     browser.browserAction.setBadgeBackgroundColor({ color: "#3498db" });
     
+    // Start preloading media ID if this is a WordPress site
+    if (message.isWordPressSite) {
+      // Get the site URL
+      browser.storage.sync.get(['wpSiteUrl'], (items) => {
+        if (items.wpSiteUrl) {
+          // Preload the media ID in parallel with the AI call
+          console.log("Preloading media ID for image:", message.imageUrl);
+          getMediaIdFromUrl(items.wpSiteUrl, message.imageUrl)
+            .then(mediaId => {
+              console.log("Preloaded media ID:", mediaId);
+              preloadedMediaId = mediaId;
+            })
+            .catch(error => {
+              console.error("Error preloading media ID:", error);
+              // Don't set an error here, as this is just a preloading step
+            });
+        }
+      });
+    }
+    
     generateAltText(message.imageData, message.htmlContext, message.imageUrl, message.originalAlt)
       .then(altText => {
         console.log("Generated alt text:", altText);
@@ -110,7 +131,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           originalAlt: message.originalAlt,
           altText: altText,
           wpPostId: message.wpPostId,
-          isWordPressSite: message.isWordPressSite
+          isWordPressSite: message.isWordPressSite,
+          mediaId: preloadedMediaId // Include the preloaded media ID
         };
         
         // Update badge to indicate success
@@ -126,7 +148,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             imageUrl: message.imageUrl,
             originalAlt: message.originalAlt,
             wpPostId: message.wpPostId,
-            isWordPressSite: message.isWordPressSite
+            isWordPressSite: message.isWordPressSite,
+            mediaId: preloadedMediaId // Include the preloaded media ID
           }).catch(err => {
             // Ignore the error - popup not open
             console.log("Popup not open yet, data will be sent when opened");
@@ -165,7 +188,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         imageUrl: processingImageData.imageUrl,
         originalAlt: processingImageData.originalAlt,
         wpPostId: processingImageData.wpPostId,
-        isWordPressSite: processingImageData.isWordPressSite
+        isWordPressSite: processingImageData.isWordPressSite,
+        mediaId: processingImageData.mediaId // Include the preloaded media ID
       });
     } 
     // If there was a previous error, send it to the popup
@@ -187,8 +211,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Handle the WordPress alt text update request from popup
     console.log("Received request to update WordPress alt text", message);
     
-    // Get media ID from URL
-    getMediaIdFromUrl(message.wpSiteUrl, message.imageUrl)
+    // If we already have the media ID, use it; otherwise, get it
+    const getMediaId = message.mediaId 
+      ? Promise.resolve(message.mediaId)
+      : getMediaIdFromUrl(message.wpSiteUrl, message.imageUrl);
+    
+    getMediaId
       .then(mediaId => {
         if (!mediaId) {
           throw new Error("Could not find media ID for this image");
@@ -224,8 +252,12 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Handle the AltSync request from popup
     console.log("Received request to sync alt text", message);
     
-    // Get media ID from URL
-    getMediaIdFromUrl(message.wpSiteUrl, message.imageUrl)
+    // If we already have the media ID, use it; otherwise, get it
+    const getMediaId = message.mediaId 
+      ? Promise.resolve(message.mediaId)
+      : getMediaIdFromUrl(message.wpSiteUrl, message.imageUrl);
+    
+    getMediaId
       .then(mediaId => {
         if (!mediaId) {
           throw new Error("Could not find media ID for this image");
@@ -283,6 +315,14 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
           error: error.message
         });
       });
+  }
+});
+
+// Reset data when loading a new page
+browser.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+  if (changeInfo.status === 'complete') {
+    // Reset preloaded data when navigating to a new page
+    preloadedMediaId = null;
   }
 });
 

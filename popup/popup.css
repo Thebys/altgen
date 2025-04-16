@@ -17,6 +17,16 @@ body {
   padding: 16px;
 }
 
+/* Add vertical spacing to direct children of sections */
+.section > * {
+  margin-bottom: 10px;
+}
+
+/* Remove margin from the last child to avoid extra padding */
+.section > *:last-child {
+  margin-bottom: 0;
+}
+
 h1 {
   font-size: 18px;
   margin-bottom: 16px;
@@ -27,7 +37,7 @@ h1 {
 
 h2 {
   font-size: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   color: #2c3e50;
 }
 
@@ -37,6 +47,17 @@ h2 {
   border-radius: 6px;
   padding: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Add more space between fields */
+.field-group {
+  margin-bottom: 10px;
+}
+
+/* Add more spacing between labels and their controls */
+label {
+  display: block;
+  margin-bottom: 5px;
 }
 
 .hidden {
@@ -105,16 +126,44 @@ button:hover {
 
 .actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
 .status {
   font-size: 13px;
   color: #27ae60;
+  margin-top: 10px;
 }
 
 #error-message {
   color: #e74c3c;
   margin-bottom: 12px;
+}
+
+/* Style for the update button when media ID is preloaded */
+#update-wp-btn.ready {
+  background-color: #27ae60; /* Green color to indicate readiness */
+  border-color: #27ae60;
+  box-shadow: 0 0 5px rgba(39, 174, 96, 0.5);
+  transition: all 0.3s ease;
+}
+
+#update-wp-btn.ready:hover {
+  background-color: #2ecc71;
+  border-color: #2ecc71;
+}
+
+/* Style for sync options div */
+#sync-options {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+/* More spacing for the sync controls */
+#sync-mode {
+  margin-bottom: 10px;
+  padding: 6px;
+  width: 100%;
 } 
